@@ -1,65 +1,175 @@
-import Image from "next/image";
+'use client';
+import { useState } from 'react';
+import { Download } from "lucide-react";
+import ProgressBar from '@/components/ProgressBar';
+import ImageProgressBar from '@/components/ImageProgressBar';
+import TexCode from '@/components/TypstCode';
+import { useImageDownload, type ImageData } from '@/lib/hooks/download-images';
+
+// Typst preamble template
+const Preliminar = `// Preamble - Customize as needed
+#set page(paper: "a4", margin: 2cm)
+#set text(font: "Linux Libertine", size: 11pt, lang: "ca")
+#set heading(numbering: "1.1")
+#set par(justify: true)
+`;
+
+// Helper to check for special characters that need font support
+function hasSpecialChars(text: string): boolean {
+  // Check for characters outside basic Latin
+  return /[^\x00-\xFF]/.test(text);
+}
+
+// Helper to check for small command usage
+function hasSmallCommand(text: string): boolean {
+  return text.includes('#small(') || text.includes('#text(size:');
+}
+
+// Concatenate preamble with generated Typst code
+function concatTex(preamble: string, code: string, hasWeird: boolean, hasSmall: boolean): string {
+  let result = preamble;
+  
+  if (hasWeird) {
+    result += '\n// Note: Document contains special characters - ensure font supports them\n';
+  }
+  
+  if (hasSmall) {
+    result += `
+// Small text helper function
+#let small(body) = text(size: 0.9em, body)
+`;
+  }
+  
+  result += '\n// Document content\n' + code;
+  return result;
+}
 
 export default function Home() {
+  const [pageId, setPageId] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [texOutput, setTeXOutput] = useState<string | null>(null);
+  const [hasWeirdChars, setHasWeirdChars] = useState<boolean>(false);
+  const [hasSmall, setHasSmallCommand] = useState<boolean>(false);
+  const [progress, setProgress] = useState<{ current: number; total: number; loading: boolean }>({ current: 0, total: 0, loading: false });
+  const [images, setImages] = useState<ImageData[]>([]);
+
+  const { prepareImagesZip, downloadZip, reset, isDownloading, downloadProgress, hasImages, downloadStats } = useImageDownload();
+
+  const generateTeX = async () => {
+    if (!pageId.trim()) {
+      setError('Si us plau, introdueix un ID de pàgina de Notion.');
+      return;
+    }
+
+    setError(null);
+    setTeXOutput(null);
+    setImages([]);
+    reset();
+    setProgress({ current: 0, total: 1, loading: true });
+
+    try {
+      const response = await fetch('/api/getTypstAndImages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pageId: pageId.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error convertint la pàgina de Notion');
+      }
+
+      setTeXOutput(data.typstCode);
+      setImages(data.images || []);
+      setHasWeirdChars(hasSpecialChars(data.typstCode));
+      setHasSmallCommand(hasSmallCommand(data.typstCode));
+
+      // Prepare images for download if there are any
+      if (data.images && data.images.length > 0) {
+        await prepareImagesZip(data.images, setError);
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconegut');
+    } finally {
+      setProgress({ current: 0, total: 0, loading: false });
+    }
+  };
+
+  const handleDownloadImages = () => {
+    downloadZip(pageId);
+  };
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="max-w-xl mx-auto p-8 font-sans text-gray-800">
+      <h1 className="text-2xl font-bold mb-4">Notion a Typst</h1>
+      <p className="text-gray-600 mb-4">
+        Introdueix l&apos;ID de la pàgina de Notion per generar el codi Typst corresponent.
+      </p>
+      <div className="flex items-center gap-4 mt-2">
+        <input
+          className="flex-1 p-3 border border-gray-300 rounded-md text-base"
+          type="text"
+          placeholder="30511a9761ab802c808cdbb05b786986"
+          value={pageId}
+          onChange={(e) => setPageId(e.target.value)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <button 
+          className="bg-green-600 text-white cursor-pointer py-3 px-5 rounded-lg font-medium shadow hover:bg-green-500 transition whitespace-nowrap disabled:bg-gray-400" 
+          onClick={generateTeX}
+          disabled={progress.loading || isDownloading}
+        >
+          Generar codi Typst
+        </button>
+      </div>
+      
+      <div className="mt-2">
+      {error && (
+        <>
+          <p className="mt-10 font-bold text-gray-800">Error</p>
+          <pre className="text-red-600 mt-2 whitespace-pre-wrap">{error}</pre>
+        </>
+      )}
+
+      {progress.loading && (
+        <ProgressBar current={progress.current} total={progress.total} loading={progress.loading} />
+      )}
+
+      {isDownloading && (
+        <ImageProgressBar current={downloadProgress.current} total={downloadProgress.total} loading={isDownloading} />
+      )}
+
+      {texOutput && (
+        <>
+          <TexCode code={concatTex(Preliminar, texOutput, hasWeirdChars, hasSmall)} />
+        </>
+      )}
+
+      {/* Add download images button */}
+      {texOutput && images.length > 0 && (
+        <div className="mt-4">
+          <button 
+            className="flex items-center gap-2 bg-blue-600 text-white cursor-pointer py-2 px-4 rounded-lg font-medium shadow hover:bg-blue-500 transition disabled:bg-gray-400"
+            onClick={handleDownloadImages}
+            disabled={isDownloading || progress.loading || !hasImages}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <Download size={18} /> Descarregar imatges (ZIP)
+          </button>
+          {downloadStats.total > 0 && (
+            <p className="text-sm text-gray-600 mt-2">
+              {downloadStats.successful > 0 
+                ? `${downloadStats.successful} de ${downloadStats.total} imatges preparades` 
+                : `S'han detectat ${downloadStats.total} imatges`}
+            </p>
+          )}
         </div>
-      </main>
+      )}
+
+      </div>
     </div>
   );
 }
