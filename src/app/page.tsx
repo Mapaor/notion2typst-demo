@@ -78,6 +78,8 @@ export default function Home() {
       <p className="text-gray-600 mb-4">
         Introdueix l&apos;ID de la pàgina de Notion per generar el codi Typst corresponent.
       </p>
+      <p className="text-gray-400 text-small">Note: To use this with your workspace see the GitHub instructions.</p>
+
       <div className="flex items-center gap-4 mt-2">
         <input
           className="flex-1 p-3 border border-gray-300 rounded-md text-base"
