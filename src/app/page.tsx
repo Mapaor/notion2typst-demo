@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Download } from "lucide-react";
+import { Download, Github } from "lucide-react";
 import ProgressBar from '@/components/ProgressBar';
 import ImageProgressBar from '@/components/ImageProgressBar';
 import TypstCode from '@/components/TypstCode';
@@ -65,7 +65,16 @@ export default function Home() {
 
   return (
     <div className="max-w-xl mx-auto p-8 font-sans text-gray-800">
+      <div className='flex flex-row justify-between items-center gap-2 pb-2'>
       <h1 className="text-2xl font-bold mb-4">Notion a Typst</h1>
+      <a href="https://github.com/Mapaor/notion2typst-demo" 
+        className="pb-2 text-black hover:text-gray-600 transition-transform duration-200"
+        target='_blank'
+        rel="noopener noreferrer"
+      >
+      <Github></Github>
+      </a>
+      </div>
       <p className="text-gray-600 mb-4">
         Introdueix l&apos;ID de la pàgina de Notion per generar el codi Typst corresponent.
       </p>
