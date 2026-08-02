@@ -1,6 +1,6 @@
 {
   "name": "n2t-wikiblog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,23 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@nast/notion2typst": "^0.2.4",
+    "@icons-pack/react-simple-icons": "^13.11.1",
+    "@nast/notion2typst": "^0.2.6",
     "@nast/types": "^0.1.1",
     "jszip": "^3.10.1",
-    "lucide-react": "^0.575.0",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "lucide-react": "^1.28.0",
+    "next": "16.3.0-canary.106",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^26.1.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.2.12",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^6.0.3"
   }
 }

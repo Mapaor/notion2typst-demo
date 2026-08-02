@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Download, Github } from "lucide-react";
+import { Download } from "lucide-react";
+import { SiGithub as Github } from "@icons-pack/react-simple-icons";
 import ProgressBar from '@/components/ProgressBar';
 import ImageProgressBar from '@/components/ImageProgressBar';
 import TypstCode from '@/components/TypstCode';
